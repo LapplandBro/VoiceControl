@@ -529,6 +529,12 @@ static void UpdateDistanceStats(VoiceRecipientScan& scan, float distance)
 static std::vector<VoiceRecipient> GetVoiceRecipients(int fromClientIndex, bool applyProximity, bool allowTvReplay, VoiceRecipientScan& scan)
 {
 	std::vector<VoiceRecipient> recipients;
+	if (g_pVoiceControlServer == nullptr)
+	{
+		scan.recipients = 0;
+		return recipients;
+	}
+
 	int fromClientSlot = fromClientIndex - 1;
 	Vector speakerOrigin;
 	bool hasSpeakerOrigin = !applyProximity || GetLiveClientOrigin(fromClientIndex, speakerOrigin, scan);
@@ -657,6 +663,17 @@ static std::vector<VoiceRecipient> GetVoiceRecipients(int fromClientIndex, bool 
 
 DETOUR_DECL_STATIC4(VC_SV_BroadcastVoiceData, void, IClient*, pClient, int, nBytes, uint8_t*, data, int64, xuid)
 {
+	if (pClient == nullptr)
+	{
+		return;
+	}
+
+	if (data == nullptr || nBytes <= 0 || nBytes > MAX_PACKET_SIZE)
+	{
+		DETOUR_STATIC_CALL(VC_SV_BroadcastVoiceData)(pClient, nBytes, data, xuid);
+		return;
+	}
+
 	int fromClientSlot = pClient->GetPlayerSlot();
 	int fromClientIndex = fromClientSlot + 1;
 
@@ -674,6 +691,12 @@ DETOUR_DECL_STATIC4(VC_SV_BroadcastVoiceData, void, IClient*, pClient, int, nByt
 	bool proximityEnabled = IsProximityEnabled();
 	if (proximityEnabled)
 	{
+		if (g_pVoiceControlServer == nullptr)
+		{
+			DETOUR_STATIC_CALL(VC_SV_BroadcastVoiceData)(pClient, nBytes, data, xuid);
+			return;
+		}
+
 		Vector speakerOrigin;
 		if (!GetLiveClientOrigin(fromClientIndex, speakerOrigin, proximityBypassScan))
 		{

@@ -36,7 +36,9 @@ RUN apt install -y \
     libopus-dev:i386
 
 RUN git clone https://github.com/xiph/opus.git -b v1.3.1 --depth 1
-RUN cd opus && ./autogen.sh && ./configure CFLAGS="-m32 -g -O2" LDFLAGS=-m32 && make && make install && cd ..
-RUN cd opus && make distclean && ./configure CFLAGS="-fPIC -g -O2" --prefix=/usr/local/opus64 && make && make install && cd ..
+# -g0: do not embed DWARF into static libopus (Breakpad/Accelerator only handles up to DWARF4;
+# GCC 11+ on Ubuntu 22.04 defaults to DWARF5 when -g is set).
+RUN cd opus && ./autogen.sh && ./configure CFLAGS="-m32 -O2 -g0" LDFLAGS=-m32 && make && make install && cd ..
+RUN cd opus && make distclean && ./configure CFLAGS="-fPIC -O2 -g0" --prefix=/usr/local/opus64 && make && make install && cd ..
 
 RUN pip install ./ambuild

@@ -7,7 +7,9 @@
 #define LEVEL_LOUDER 2500
 #define MAX_LEVELS 4
 
-#define MAX_FRAMEBUFFER_SAMPLES 480
+// Opus max packet duration is 120ms; at 48kHz that is 5760 samples/channel.
+// Steam voice is commonly 20ms @ 24/48kHz (480/960); keep headroom for larger frames.
+#define MAX_FRAMEBUFFER_SAMPLES 5760
 #define STEAM_HEADER_SIZE 12
 #define CRC_SIZE 4
 #define CHANNELS 1

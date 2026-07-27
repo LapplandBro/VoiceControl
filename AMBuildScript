@@ -258,6 +258,15 @@ class ExtensionConfig(object):
     if have_gcc:
       cxx.cflags += ['-mfpmath=sse']
 
+    # Debug symbols: Breakpad used by SourceMod Accelerator typically parses DWARF <= 4.
+    # GCC 11+ / modern Clang default to DWARF5, which can SIGSEGV in ReadAbbrevs().
+    if builder.options.debug == '1':
+      cxx.cflags += ['-g', '-gdwarf-4', '-fno-eliminate-unused-debug-types']
+    else:
+      cxx.cflags += ['-g0']
+      if builder.target_platform == 'linux':
+        cxx.linkflags += ['-Wl,--strip-debug']
+
     if builder.options.opt == '1':
       cxx.cflags += ['-O3']
 
